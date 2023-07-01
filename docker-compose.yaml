@@ -1,0 +1,61 @@
+version: '3.9'
+services:
+  frontend:
+    build:
+      context: ./front
+    ports:
+      - 5000:5000
+    depends_on:
+      - backend
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - 5001:5000
+    depends_on:
+      - database1
+      - database2
+      - database3
+    environment:
+      - DB_HOST=database
+      - DB_PORT=3306
+      - DB_USER=myuser
+      - DB_PASSWORD=mypassword
+      - DB_NAME=mydatabase
+  database1:
+    image: mysql/mysql-cluster:8.0.23
+    command: --ndbcluster --ndb-connectstring database2:1186
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: example
+      MYSQL_DATABASE: mydatabase
+      MYSQL_USER: myuser
+      MYSQL_PASSWORD: mypassword
+      MYSQL_ROOT_HOST: '%'
+    ports:
+      - 3306:3306
+      - 33061:33061
+    volumes:
+      - database1-data:/var/lib/mysql
+  database2:
+    image: mysql/mysql-cluster:8.0.23
+    command: --ndbcluster --ndb-connectstring database1:1186
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: example
+    volumes:
+      - database2-data:/var/lib/mysql
+  database3:
+    image: mysql/mysql-cluster:8.0.23
+    command: --ndbcluster --ndb-connectstring database1:1186
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: example
+    volumes:
+      - database3-data:/var/lib/mysql
+
+volumes:
+  database1-data:
+  database2-data:
+  database3-data:
+
